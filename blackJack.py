@@ -4,7 +4,7 @@ import supervision as sv
 import openai
 
 # Replace with your OpenAI API key
-openai.api_key = "YOUR_OPENAI_API_KEY"
+openai.api_key = 'OPENAI_API_KEY'
 
 # Function to read goals/instructions from a text file
 def read_goals_from_file(file_path):
