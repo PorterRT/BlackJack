@@ -1,6 +1,7 @@
 import os
 import cv2
 import inference
+import torch
 import supervision as sv
 from openai import OpenAI
 
@@ -8,6 +9,9 @@ client = OpenAI()
 
 # Replace with your OpenAI API key
 openai_api_key = os.getenv('OPENAI_API_KEY')
+annotator = sv.BoxAnnotator()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Function to read instructions/goals from a text file
 def read_instructions_from_file(file_path):
@@ -18,7 +22,7 @@ def read_instructions_from_file(file_path):
 # Create an OpenAI GPT-4 conversation with the instructions
 def create_gpt4_conversation(instructions):
     conversation = [
-        {"role": "system", "content": "You are a robot that can interact with the webcam."},
+        {"role": "system", "content": "You are a going to interact with a webcam and use that info of playing cards there to help a player win at blackjack"},
         {"role": "user", "content": instructions},
     ]
     return conversation
@@ -34,7 +38,6 @@ def handle_gpt4_response(response):
     else:
         print("")
 
-annotator = sv.BoxAnnotator()
 
 def on_prediction(predictions, image):
     labels = [p["class"] for p in predictions["predictions"]]
@@ -53,7 +56,7 @@ def on_prediction(predictions, image):
     messages=conversation)
     
     # Print the structure of the GPT-4 response (for debugging)
-    print(gpt4_response)
+    #print(gpt4_response)
 
     # Handle the GPT-4 response
     handle_gpt4_response(gpt4_response)
