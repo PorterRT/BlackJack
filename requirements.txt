@@ -1,0 +1,3 @@
+pip install supervision
+pip install openai
+pip install inference

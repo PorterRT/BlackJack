@@ -1,10 +1,13 @@
+import os
 import cv2
 import inference
 import supervision as sv
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 
 # Replace with your OpenAI API key
-openai.api_key = 'YOUR_OPENAI_API_KEY'
+openai_api_key = os.getenv('OPENAI_API_KEY')
 
 # Function to read instructions/goals from a text file
 def read_instructions_from_file(file_path):
@@ -22,9 +25,14 @@ def create_gpt4_conversation(instructions):
 
 # Function to handle OpenAI GPT-4 responses
 def handle_gpt4_response(response):
-    # Extract and print the GPT-4 model's response
-    model_response = response['choices'][0]['message']['content']
-    print("GPT-4 Response:", model_response)
+    # Print the entire response for debugging
+
+    # Accessing the content of the response
+    if 'choices' in response and len(response['choices']) > 0:
+        model_response = response['choices'][0]['message']['content']
+        print("GPT-4 Response:", model_response)
+    else:
+        print("")
 
 annotator = sv.BoxAnnotator()
 
@@ -41,29 +49,33 @@ def on_prediction(predictions, image):
     conversation = create_gpt4_conversation(instructions)
     
     # Use GPT-4-turbo to get a response
-    gpt4_response = openai.ChatCompletion.create(
-        model="gpt-4-1106-preview",
-        messages=conversation
-    )
+    gpt4_response = client.chat.completions.create(model="gpt-4-1106-preview",
+    messages=conversation)
     
+    # Print the structure of the GPT-4 response (for debugging)
+    print(gpt4_response)
+
     # Handle the GPT-4 response
     handle_gpt4_response(gpt4_response)
     
-    # Display the annotated image
-    cv2.imshow(
-        "Prediction", 
-        annotator.annotate(
-            scene=image, 
-            detections=detections,
-            labels=labels
-        )
+    # Annotate and display the image with predictions
+    annotated_image = annotator.annotate(
+        scene=image, 
+        detections=detections,
+        labels=labels
     )
+    cv2.imshow("Prediction", annotated_image)
     cv2.waitKey(1)
 
+# Initialize and run the inference stream
 inference.Stream(
-    source="webcam",  # or rtsp stream or camera id
-    model="black-jack-8goxw/9",  # from Universe
-    output_channel_order="BGR",
+    source="webcam",  # Use the default webcam
+    model="black-jack-8goxw/13",  # ML model from Universe
+    output_channel_order="BGR",  # Color channel order for OpenCV
     use_main_thread=True,  # for OpenCV display
     on_prediction=on_prediction,
+    api_key='zfVbjcmPn6E6xtOWLQ3j'  # Replace with your actual API key if required
 )
+
+# Cleanup: Release the webcam and close OpenCV window
+cv2.destroyAllWindows()
